@@ -18,7 +18,7 @@
 // Define a bitrate as 115200 Bd (BREGH=1)
 #define BRATE			34
 
-// Define the bits to enable a UART, set BREGH=1, 
+// Define the bits to configure UART1, set BRGH=1, 
 // 1 stop, no parity + hardware flow control, and wake up enabled
 #define U_ENABLE		0x8288
 
@@ -31,10 +31,11 @@
 
 // Define the bits to enable the second UART.
 // This is the UART for talking to the Siemens instrument
-// and should be BREGH=1, 1 stop, even parity, no
-// flow control
-#define U2_ENABLE		0x800A
-//#define U2_ENABLE		0x8208
+// and should be BRGH=1, 1 stop, even parity, no
+// flow control, stop on idle enabled
+#define U2_ENABLE		0xA00A // stop on idle enabled
+//#define U2_ENABLE		0x800A // stop on idle disabled
+#define U2_DISABLE		0x200A
 
 // Define the bits to enable a UART for transmission and clear all flags
 #define U_TX			0x0400
