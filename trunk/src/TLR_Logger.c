@@ -212,7 +212,7 @@ int main(void) {
 	// Enter an endless loop
 	while(1) {
 		// Read from the UARTS to clear them
-		
+
 		// Check to see if the terminal session is active
 		if (terminalActive > 0) {
 			// Since the terminal is active, we assume the user wants to do something
@@ -604,10 +604,12 @@ int main(void) {
 			// Read the log sample
 			readAndLogSample();
 
-			// Before it goes to sleep, make sure we reset the
-			// bit to enable the UART for the terminal to wake it up
+			// If the terminal is not active, shut everything down and wait for next interrupt
 			if (terminalActive <= 0) {
+				// Before it goes to sleep, make sure we reset the
+				// bit to enable the UART for the terminal to wake it up
 				U1MODE = 0x8288;
+
 				// Go to Sleep
 				//Sleep();
 				Idle();
