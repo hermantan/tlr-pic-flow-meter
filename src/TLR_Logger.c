@@ -40,9 +40,6 @@ _CONFIG2(FNOSC_PRIPLL & PLL_96MHZ_ON & PLLDIV_DIV2 & OSCIOFNC_OFF & FCKSM_CSDCMD
 // A flag to indicate that the UART 1 is active (terminal session is active)
 int terminalActive = 0;
 
-// An int to track how many characters were last written to the debug log file
-int debugCharsWritten = 0;
-
 // The interrupt service routine for the RTCC
 void _ISR _RTCCInterrupt(void) {
 	// Clear the interrupt flag
@@ -68,19 +65,10 @@ void _ISR _U1RXInterrupt(void) {
 
 	// Mark that the terminal session is active
 	terminalActive = 1;	
-
-	// TODO kgomes - Should set a flag to indicate the 
-	// last time something was received so it can timeout
-	// and go back to sleep in the main loop
 }
 
 // This function sets up the various peripherals that are associated with the PIC controller
 void setupPeripherals() {
-	// Disable the USB peripheral
-	_HOSTEN = 0;
-    _USBEN = 0;
-    _OTGEN = 0;
-    _USBPWR = 0;
 	// Shut off the USB
 	PMD4bits.USB1MD = 1;
 
@@ -311,7 +299,6 @@ int main(void) {
 
 	// Enter an endless loop
 	while(1) {
-		// Read from the UARTS to clear them
 
 		// Check to see if the terminal session is active
 		if (terminalActive > 0) {
@@ -369,7 +356,7 @@ int main(void) {
 					userExit = 1;
 					// Clear the terminal active flag
 					terminalActive = 0;
-					putsU1("Exited terminal connection and resuming normal operation, have a nice day\r");
+					putsU1("Exited terminal and resuming normal operation.\r");
 				} else if (strncmp(command,"gpdt",4) == 0) {
 					// The user has request the date and time from the PIC
 					RTCCgrab();
@@ -415,7 +402,7 @@ int main(void) {
 					PMD1bits.SPI1MD = 1;
 				} else if (strncmp(command,"spyr",4) == 0) {
 					// Prompt for year
-					putsU1("Please enter the last two digits of the year: i.e. '08' for 2008\r> ");
+					putsU1("Enter last two digits of the year: i.e. '08' for 2008\r> ");
 					getsU1(command,128);
 					// Set the year using the entered two digits
 					char yearAsChar[3] = {command[0],command[1],'\0'};
@@ -434,7 +421,7 @@ int main(void) {
 						getYear(), getMonth(), getDay(), getHour(), getMin(), getSec());
 				} else if (strncmp(command,"spmo",4) == 0) {
 					// Prompt for month
-					putsU1("Please enter the month in full two digits: i.e. '08' for August\r> ");
+					putsU1("Enter month in full two digits: i.e. '08' for August\r> ");
 					getsU1(command,128);
 					// Set the month using the response from the user
 					char monthAsChar[3] = {command[0],command[1],'\0'};
@@ -452,7 +439,7 @@ int main(void) {
 						getYear(), getMonth(), getDay(), getHour(), getMin(), getSec());
 				} else if (strncmp(command,"spdy",4) == 0) {
 					// Prompt for day
-					putsU1("Please enter day of the month in full two digits: i.e. '02' for the 2nd\r> ");
+					putsU1("Eenter day of month in full two digits: i.e. '02' for the 2nd\r> ");
 					getsU1(command,128);
 					// Set the day using the first two chars of the response 
 					char dayAsChar[3] = {command[0],command[1],'\0'};
@@ -470,7 +457,7 @@ int main(void) {
 						getYear(), getMonth(), getDay(), getHour(), getMin(), getSec());
 				} else if (strncmp(command,"sphr",4) == 0) {
 					// Prompt for hour
-					putsU1("Please enter hour of the day in full two digits and 24 hour: i.e. '02' for 2AM\r> ");
+					putsU1("Enter hour of day in full two digits (24 hour): i.e. '02' for 2AM\r> ");
 					getsU1(command,128);
 					// Set the hour using the first two chars of the response 
 					char hourAsChar[3] = {command[0],command[1],'\0'};
@@ -488,7 +475,7 @@ int main(void) {
 						 getYear(), getMonth(), getDay(), getHour(), getMin(), getSec());
 				} else if (strncmp(command,"spmn",4) == 0) {
 					// Prompt for minute
-					putsU1("Please enter minute in full two digits: i.e. '02' for 2 minutes after the hour\r> ");
+					putsU1("Enter minute in full two digits: i.e. '02' for 2 minutes after hour\r> ");
 					getsU1(command,128);
 					// Set the minute using the first two chars of the response 
 					char minuteAsChar[3] = {command[0],command[1],'\0'};
@@ -506,7 +493,7 @@ int main(void) {
 						getYear(), getMonth(), getDay(), getHour(), getMin(), getSec());
 				} else if (strncmp(command,"spsc",4) == 0) {
 					// Prompt for seconds
-					putsU1("Please enter seconds in full two digits: i.e. '02' for 2 seconds after the minute");
+					putsU1("Enter seconds in full two digits: i.e. '02' for 2 seconds after minute\r>");
 					getsU1(command,128);
 					// Set the second using the first two chars of the response 
 					char secondAsChar[3] = {command[0],command[1],'\0'};
@@ -525,7 +512,7 @@ int main(void) {
 				} else if (strncmp(command,"ptsm",4) == 0) {
 					// Ask the user how many samples to take
 					putsU1("How many samples do you want to log (01-99)?\r");
-					putsU1("Please enter in two digit format (i.e. 02 for two samples)\r>");
+					putsU1("Enter in two digit format (i.e. 02 for two samples)\r>");
 					getsU1(command,128);
 					// Grab the user's reply
 					char numSampsAsChar[3] = {command[0],command[1],'\0'};
@@ -538,9 +525,9 @@ int main(void) {
 						readAndLogSample();
 						putU1('.');
 					}
-					sprintf(toPrint,"OK, done sampling, you can use gplf to see the samples. \r");
+					sprintf(toPrint,"OK, done sampling, use gplf to see the samples. \r");
 				} else if (strncmp(command,"pssi",4) == 0) {
-					putsU1("Choose the interval that you wish the PIC to sample the flow meter:\r");
+					putsU1("Choose interval that the PIC will sample the flow meter:\r");
 					putsU1("A = Every 10 minutes\rB = Every hour\rC = Once a day\rD = Once a week\r>");
 					getsU1(command,128);
 					if (command[0] == 'a' || command[0] == 'A') {
@@ -556,13 +543,17 @@ int main(void) {
 						ALCFGRPTbits.AMASK = 0x7;
 						sprintf(toPrint,"OK, set to sample once per week.\r");
 					} else {
-						sprintf(toPrint,"Sorry, did not understand that option, you can try again.\r");
+						sprintf(toPrint,"Sorry, did not understand that option.\r");
 					}
 				} else if (strncmp(command,"spcl",4) == 0) {
 					putsU1("This command will CLEAR ALL DATA FROM THE LOGS!!!\r");
 					putsU1("ARE YOU SURE YOU WANT TO DO THIS?(y|[n])\r>");
 					getsU1(command,128);
 					if (command[0] == 'y' || command[0] == 'Y') {
+						// Enable SPI1
+						PMD1bits.SPI1MD = 0;
+
+						// Buffer allocation
 						char headerBuffer[255];
 						// Initialize the File system
 						if (FSInit()){
@@ -584,7 +575,7 @@ int main(void) {
 							// If the file opened OK, write a header
 							if (logFile != NULL) {
 								// Write to a buffer first
-								charsWritten = sprintf(headerBuffer,"Timestamp,Average Flow Rate(l/s),Flow Total(lx100),Transmitter Temp(Deg C),Battery Cap(%),Power Status,Fault Code\n");
+								charsWritten = sprintf(headerBuffer,"Timestamp,Avg Flow Rate(l/s),Flow Total(lx100),Transmitter Temp(Deg C),Battery Cap(%),Power Status,Fault Code\n");
 								// Write those to a file
 								FSfwrite(headerBuffer,1,charsWritten,logFile);
 
@@ -592,8 +583,13 @@ int main(void) {
 								FSfclose(logFile);
 							}
 						}
+
+						// Disable SPI1
+						PMD1bits.SPI1MD = 1;
+						sprintf(toPrint,"OK, log file is cleared.\r");
+					} else {
+						sprintf(toPrint,"Log file NOT cleared.\r");
 					}
-					sprintf(toPrint,"OK, log file is is cleared.\r");
 				} else if (strncmp(command,"gfdt",4) == 0) {
 					unsigned char flowMeterClock[6];
 					readActualDateAndTime(flowMeterClock);
@@ -697,9 +693,12 @@ int main(void) {
 					putsU1("Flow Meter Clock will be set to time on PIC\r");
 					unsigned char timeSnapshot[6] = {getYear(),getMonth(),getDay(),getHour(),getMin(),getSec()};
 					setActualDateAndTime(timeSnapshot);
-					putsU1("OK, time set on flow meter.");					
+					putsU1("OK, time set on flow meter.\r");					
 				} else {
-					sprintf(toPrint,"Sorry, didn't understand %s \r",command);
+					if (command[0] == '\0') {
+					} else {
+						sprintf(toPrint,"Sorry, didn't understand %s \r",command);
+					}
 				}
 				putsU1(toPrint);
 			}
@@ -713,8 +712,7 @@ int main(void) {
 				// bit to enable the UART for the terminal to wake it up
 				U1MODE = 0x8288;
 
-				// Go to Sleep
-				//Sleep();
+				// Put PIC in idle mode
 				Idle();
 			}
 		}
