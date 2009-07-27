@@ -439,7 +439,7 @@ int main(void) {
 						getYear(), getMonth(), getDay(), getHour(), getMin(), getSec());
 				} else if (strncmp(command,"spdy",4) == 0) {
 					// Prompt for day
-					putsU1("Eenter day of month in full two digits: i.e. '02' for the 2nd\r> ");
+					putsU1("Enter day of month in full two digits: i.e. '02' for the 2nd\r> ");
 					getsU1(command,128);
 					// Set the day using the first two chars of the response 
 					char dayAsChar[3] = {command[0],command[1],'\0'};
