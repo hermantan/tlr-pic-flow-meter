@@ -15,12 +15,14 @@
 // Alias for the RTS Pin on UART2
 #define TRTS_U2			TRISFbits.TRISF13
 
-// Define a bitrate as 115200 Bd (BREGH=1)
-#define BRATE			34
+// Define a bitrate (BREGH=1)
+//#define BRATE			34  // 115200
+#define BRATE			416 // 9600
 
 // Define the bits to configure UART1, set BRGH=1, 
-// 1 stop, no parity + hardware flow control, and wake up enabled
-#define U_ENABLE		0x8288
+// 1 stop, no parity, and wake up enabled
+// #define U_ENABLE		0x8288 // Hardware flow control
+#define U_ENABLE		0x8088 // No flow control
 
 // This is the baud rate for the 2nd UART which talks
 // to the Siemens instrument.  The instrument defaults
@@ -157,12 +159,25 @@ char *getsU1( char *s, int len)
 // The function that initializes UART2 (19200@32MHz, 8, E, 1, NO FLOW CONTROL )
 void initU2( void)
 {
+	// Make sure U2 is on
+	PMD1bits.U2MD = 0;
+
+	// Now configure coms
 	U2BRG = BRATE_U2;
+
+	// Now enable
 	U2MODE = U2_ENABLE;
 	U2STA = U_TX;
+
     // Make sure RTS is an output
 	TRTS_U2 = 0;
 } // initU2
+
+// This function completely shuts down UART2
+void shutdownU2(void) {
+	// Turn off U2
+	PMD1bits.U2MD = 1;
+}
 
 // send a character to serial port 2 through UART2
 unsigned char putU2( unsigned char c)
