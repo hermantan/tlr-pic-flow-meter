@@ -40,6 +40,9 @@ _CONFIG2(FNOSC_PRIPLL & PLL_96MHZ_ON & PLLDIV_DIV2 & OSCIOFNC_OFF & FCKSM_CSDCMD
 // A flag to indicate that the UART 1 is active (terminal session is active)
 int terminalActive = 0;
 
+// An int to track how many characters were last written to the debug log file
+int debugCharsWritten = 0;
+
 // The interrupt service routine for the RTCC
 void _ISR _RTCCInterrupt(void) {
 	// Clear the interrupt flag
@@ -71,9 +74,100 @@ void _ISR _U1RXInterrupt(void) {
 	// and go back to sleep in the main loop
 }
 
+// This function sets up the various peripherals that are associated with the PIC controller
+void setupPeripherals() {
+	// Disable the USB peripheral
+	_HOSTEN = 0;
+    _USBEN = 0;
+    _OTGEN = 0;
+    _USBPWR = 0;
+	// Shut off the USB
+	PMD4bits.USB1MD = 1;
+
+	// Disable all the I2C peripherals
+	I2C1CONbits.I2CEN = 0;
+	I2C2CONbits.I2CEN = 0;
+	I2C3CONbits.I2CEN = 0;
+	// Turn off all the I2C peripherals
+	PMD1bits.I2C1MD = 1;
+	PMD3bits.I2C2MD = 1;
+	PMD3bits.I2C3MD = 1;
+
+	// Disable SPI 2 and 3
+	SPI2STATbits.SPIEN = 0;
+	SPI3STATbits.SPIEN = 0;
+
+	// Turn off SPI 2 and 3
+	PMD1bits.SPI2MD = 1;
+	PMD6bits.SPI3MD = 1;
+
+	// Turn off UARTs 3 and 4
+	PMD3bits.U3MD = 1;
+	PMD4bits.U4MD = 1;
+
+	// Turn off the PMP port
+	PMD3bits.PMPMD = 1;
+
+	// Turn off the Analog to Digital Converter
+	PMD1bits.ADC1MD = 1;
+
+	// Turn off all Input Captures
+	PMD2bits.IC1MD = 1;
+	PMD2bits.IC2MD = 1;
+	PMD2bits.IC3MD = 1;
+	PMD2bits.IC4MD = 1;
+	PMD2bits.IC5MD = 1;
+	PMD2bits.IC6MD = 1;
+	PMD2bits.IC7MD = 1;
+	PMD2bits.IC8MD = 1;
+	PMD5bits.IC9MD = 1;
+
+	// Turn off all Output Comparators
+	PMD2bits.OC1MD = 1;
+	PMD2bits.OC2MD = 1;
+	PMD2bits.OC3MD = 1;
+	PMD2bits.OC4MD = 1;
+	PMD2bits.OC5MD = 1;
+	PMD2bits.OC6MD = 1;
+	PMD2bits.OC7MD = 1;
+	PMD2bits.OC8MD = 1;
+	PMD5bits.OC9MD = 1;
+
+	// Turn off CMP
+	PMD3bits.CMPMD = 1;
+
+	// Turn off CRC
+	PMD3bits.CRCMD = 1;
+
+	// Turn off UPWM
+	PMD4bits.UPWMMD = 1;
+
+	// Turn off REFO
+	PMD4bits.REFOMD = 1;
+
+	// Turn off CTMU
+	PMD4bits.CTMUMD = 1;
+
+	// Turn off LVD
+	PMD4bits.LVDMD = 1;
+
+	// Turn off Timers 1-5
+	PMD1bits.T1MD = 1;
+	PMD1bits.T2MD = 1;
+	PMD1bits.T3MD = 1;
+	PMD1bits.T4MD = 1;
+	PMD1bits.T5MD = 1;
+
+	// Start off with SPI 1 turned off
+	PMD1bits.SPI1MD = 1;
+}
+
 // This is the function to read in all the data from the flow meter and record
 // in the data buffer provided to the method call
 void readAndLogSample(void) {
+	// Make sure SPI1 is enabled
+	PMD1bits.SPI1MD = 0;
+
 	// The buffer to use to write to the file
 	char logRecordBuffer[255];
 
@@ -145,6 +239,9 @@ void readAndLogSample(void) {
 			FSfclose(logFile);
 		}
 	}
+
+	// Now shutdown SPI1
+	PMD1bits.SPI1MD = 1;
 }
 
 // The main program
@@ -208,6 +305,9 @@ int main(void) {
 
 	// Initialize the second UART (UART2)
 	initU2();
+
+	// Setup the rest of the peripherals
+	setupPeripherals();
 
 	// Enter an endless loop
 	while(1) {
@@ -277,7 +377,8 @@ int main(void) {
 						getYear(), getMonth(), getDay(), getHour(), getMin(), getSec());
 				} else if (strncmp(command,"gplf",4) == 0) {
 					// The user has requested a dump of the contents of the log file
-
+					// Turn on SPI1
+					PMD1bits.SPI1MD = 0;
 					// Initialize the File system
 					if (FSInit()){
 						// Define a pointer to the log file
@@ -310,6 +411,8 @@ int main(void) {
 					}
 					// Write done message to terminal buffer
 					sprintf(toPrint,"Done reading log file\r");
+					// Turn off SPI1
+					PMD1bits.SPI1MD = 1;
 				} else if (strncmp(command,"spyr",4) == 0) {
 					// Prompt for year
 					putsU1("Please enter the last two digits of the year: i.e. '08' for 2008\r> ");
