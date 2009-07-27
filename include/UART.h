@@ -33,6 +33,9 @@ char * getsU1( char *s, int n);
 // TODO kgomes - I think this needs to be Even parity with no flow control
 void initU2( void);
 
+// This function completely shuts down UART2
+void shutdownU2(void);
+
 // send a character to serial port 2 through UART2
 unsigned char putU2( unsigned char c);
 
