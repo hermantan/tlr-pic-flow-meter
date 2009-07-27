@@ -35,8 +35,8 @@
 // This is the UART for talking to the Siemens instrument
 // and should be BRGH=1, 1 stop, even parity, no
 // flow control, stop on idle enabled
-#define U2_ENABLE		0xA00A // stop on idle enabled
-//#define U2_ENABLE		0x800A // stop on idle disabled
+//#define U2_ENABLE		0xA00A // stop on idle enabled
+#define U2_ENABLE		0x800A // stop on idle disabled
 #define U2_DISABLE		0x200A
 
 // Define the bits to enable a UART for transmission and clear all flags
@@ -73,7 +73,8 @@ char getU1( void)
 	// Wait for a new character to arrive or until a certain number
 	// or cycles have passed
 	unsigned long uart1TimeoutCounter = 0;
-	unsigned long maxCount = 600000000;
+//	unsigned long maxCount = 600000000;
+	unsigned long maxCount = 60000000; // This is about 90 seconds
 	while ( (!U1STAbits.URXDA) && (uart1TimeoutCounter < maxCount)) {
 		uart1TimeoutCounter++;
 	}
