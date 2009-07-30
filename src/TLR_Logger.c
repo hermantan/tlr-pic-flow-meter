@@ -57,10 +57,7 @@ void _ISR _U1RXInterrupt(void) {
 	// If the terminal is not active, print a message
 	if (terminalActive == 0) {
 		// Write message
-		clrscrU1();
-		homeU1();
-		putsU1("                                          \r");
-		putsU1("Waking up, please wait for TLR> prompt ...\r");
+		putsU1("\x1b[2J\x1b[1H                            \rWaking up, please wait for TLR> prompt ...\r");
 	}
 
 	// Mark that the terminal session is active
@@ -310,9 +307,7 @@ int main(void) {
 
 			// Enter loop that asks for user's input and processes it until the user
 			// exits.
-			putsU1("\r");
-			putsU1("                                                          \r");
-			putsU1("Welcome! All normal processing is halted until 'resume' is entered\r");
+			putsU1("\r                                  \rWelcome! All normal processing is halted until 'resume' is entered\r");
 
 			// The buffer for the user's command
 			char command[128];
@@ -712,8 +707,8 @@ int main(void) {
 				// bit to enable the UART for the terminal to wake it up
 				U1MODE = 0x8288;
 
-				// Put PIC in idle mode
-				Idle();
+				// Put PIC to sleep
+				Sleep();
 			}
 		}
 	}
