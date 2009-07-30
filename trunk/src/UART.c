@@ -55,11 +55,23 @@ void initU1( void)
 // send a character to serial port 1 through UART1
 int putU1( int c)
 {
-	// Wait while the TX buffer is full
-	// TODO kgomes I should put another timeout check here as this
-	// will hang if it is trying to write something to a UART where
-	// nobody is listening
-	while ( U1STAbits.UTXBF);
+	// We had an issue when the PIC was running on batteries, that
+	// when the serial line was disconnected and it was in sleep
+	// mode, something would come across the line, making it look
+	// like a UART interrupt was thrown.  With the serial line
+	// disconnected, the TX buffer would never clear and the PIC
+	// would just hang indefinitely while we were waiting for the
+	// TX buffer to clear.  So in order to clear up this situation,
+	// we will loop while the TX buffer is full and look keep a 
+	// count to see if we are in this condition
+	unsigned long timeoutCounter = 0;
+	unsigned long maxWaitCounts = 3333333;
+	while (U1STAbits.UTXBF) {
+		timeoutCounter++;
+		if (timeoutCounter > maxWaitCounts)
+			return 0x18;
+	};
+
 	// Set character and send
 	U1TXREG = c;
 	// Return the same character
@@ -90,10 +102,10 @@ void putsU1( char *s)
 {
 	// Loop until *s == '\0' which is the end of the string, send the
 	// character and point to the next one.
-	while( *s)
-		putU1( *s++);
-	// Send a terminating cr/line feed
-//    putU1( '\r');
+	int putReturn = 0;
+	while( *s && (putReturn != 0x18)) {
+		putReturn = putU1( *s++);
+	}
 } // putsU1
 
 // receive a null terminated string in a buffer of len char
@@ -183,6 +195,10 @@ void shutdownU2(void) {
 // send a character to serial port 2 through UART2
 unsigned char putU2( unsigned char c)
 {
+	// TODO kgomes need to add timeout check here that I do
+	// for U1.  Not as critical, but still important.  If 
+	// the flow meter runs out of power, the PIC will hang with
+	// this.
 	// Wait while the TX buffer is full
 	while ( U2STAbits.UTXBF);
 	// Set character and send
