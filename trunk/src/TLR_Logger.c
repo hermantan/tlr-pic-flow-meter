@@ -708,7 +708,8 @@ int main(void) {
 				U1MODE = 0x8288;
 
 				// Put PIC to sleep
-				Sleep();
+				//Sleep();
+				Idle();
 			}
 		}
 	}
