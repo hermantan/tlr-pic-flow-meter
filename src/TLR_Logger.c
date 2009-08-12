@@ -257,7 +257,7 @@ int main(void) {
 	// 0x7 = Once a week
 	// 0x8 = Once a month
 	// 0x9 = Once a year
-	ALCFGRPTbits.AMASK = 0x6;
+	ALCFGRPTbits.AMASK = 0x5;
 
 	// Enable the alarm
 	ALCFGRPTbits.ALRMEN = 1;
